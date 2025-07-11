@@ -1,0 +1,8 @@
+.*
+!.coveragerc
+!.flake8
+!.env
+!.pylintrc
+node_modules/
+htmlcov/
+worker.state

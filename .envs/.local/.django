@@ -1,0 +1,15 @@
+# General
+# ------------------------------------------------------------------------------
+USE_DOCKER=yes
+TELEGRAM_BOT_TOKEN=
+
+# AnyMAIL
+# ------------------------------------------------------------------------------
+MAILGUN_API_KEY=724b839d1c3f1ed0e24d5d35bb699445-a4502f89-60edc8b7
+MAILGUN_DOMAIN=sweetecom.com
+DJANGO_SETTINGS_MODULE=project.settings.local
+
+# Flower
+# ------------------------------------------------------------------------------
+CELERY_FLOWER_USER=debug
+CELERY_FLOWER_PASSWORD=debug

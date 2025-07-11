@@ -1,0 +1,31 @@
+# General
+# ------------------------------------------------------------------------------
+DJANGO_SETTINGS_MODULE=project.settings.production
+DJANGO_SECRET_KEY=
+DJANGO_ADMIN_URL=
+DJANGO_ALLOWED_HOSTS=
+
+TELEGRAM_BOT_TOKEN=
+# Security
+# ------------------------------------------------------------------------------
+# TIP: better off using DNS, however, redirect is OK too
+DJANGO_SECURE_SSL_REDIRECT=False
+SHORTIFY_URL=
+SHORTIFY_API_KEY=
+
+# Gunicorn
+# ------------------------------------------------------------------------------
+WEB_CONCURRENCY=4
+
+
+# AnyMAIL
+# ------------------------------------------------------------------------------
+MAILGUN_API_KEY=
+MAILGUN_DOMAIN=
+
+GOOGLE_API_KEY=
+
+#
+MNLTH_SITE_PASS=
+MNLTH_LOGIN=
+MNLTH_PASSWD=

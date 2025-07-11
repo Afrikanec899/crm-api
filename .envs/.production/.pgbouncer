@@ -1,0 +1,14 @@
+# PgBouncer
+# ------------------------------------------------------------------------------
+DB_HOST=
+DB_NAME=
+DB_USER=
+DB_PASSWORD=
+DB_PORT=
+LISTEN_PORT=
+MAX_CLIENT_CONN=50000
+MAX_DB_CONNECTIONS=900
+RESERVE_POOL_SIZE=100
+MAX_USER_CONNECTIONS=10000
+DEFAULT_POOL_SIZE=500
+POOL_MODE=transaction

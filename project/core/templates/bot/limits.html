@@ -1,0 +1,1 @@
+Name: {{ adaccount.name }}, Limit: {% if adaccount.adtrust_dsl == -1 %}∞{% else %}{{ adaccount.adtrust_dsl }}{% endif %}{{ adaccount.currency }}, TZ: {{  adaccount.timezone_name }}{% if adaccount.adspaymentcycle %}, Bills: {{ adaccount.threshold_amount }}{{ adaccount.currency }}{% endif %}.

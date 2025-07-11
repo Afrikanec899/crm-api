@@ -1,0 +1,8 @@
+#!/bin/sh
+
+set -o errexit
+set -o pipefail
+set -o nounset
+
+export DJANGO_SETTINGS_MODULE=project.settings.production
+daphne websockets.asgi:application --bind 0.0.0.0 --port 9999 --verbosity 1

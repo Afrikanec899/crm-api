@@ -1,0 +1,54 @@
+version: "3.6"
+
+volumes:
+  postgres_local_data: {}
+  redis_local_data: {}
+
+services:
+  django: &django
+    build:
+      context: .
+      dockerfile: docker/local/django/Dockerfile
+    depends_on:
+    - postgres
+    - redis
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./project:/app
+      - .certs:/app/.certs
+    env_file:
+      - .envs/.local/.django
+      - .envs/.local/.postgres
+      - .envs/.local/.redis
+    command: /start
+
+  postgres:
+    image: postgres:12
+    volumes:
+      - postgres_local_data:/var/lib/postgresql/data
+    env_file:
+      - .envs/.local/.postgres
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:latest
+    volumes:
+      - redis_local_data:/data
+
+  celeryworker:
+    <<: *django
+    ports: []
+    command: /start-celeryworker
+
+  celerybeat:
+    <<: *django
+    ports: []
+    command: /start-celerybeat
+
+  flower:
+    <<: *django
+    ports:
+      - "5555:5555"
+    command: /start-flower

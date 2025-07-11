@@ -1,0 +1,1 @@
+🔄 AdAccount {{ adaccount.name }}{% if adaccount.business %}({{ adaccount.business.name }}){% endif %} of {{ adaccount.account.display_name }} is now {{ adaccount.get_status_display }}{% if adaccount.disable_reason %}({{ adaccount.get_disable_reason_display }}){% endif %}

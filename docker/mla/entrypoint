@@ -1,0 +1,4 @@
+#!/bin/bash
+
+/usr/sbin/nginx &&
+/mla/multilogin -Xnosplash multilogin -headless "$@"

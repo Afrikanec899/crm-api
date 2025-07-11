@@ -1,0 +1,4 @@
+❗Domains <b>UP</b>:{% for domain, duration in domains|slice:":10" %}
+{{ domain.name }} {% if duration %} after {{ duration }} downtime{% endif %}!{% endfor %}
+...
+Total up domains: {{ domains|length }}

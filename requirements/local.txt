@@ -1,0 +1,38 @@
+-r ./base.txt
+psycopg2-binary # https://github.com/psycopg/psycopg2
+celery[redis]  # https://github.com/celery/celery
+dnspython[idna]
+
+
+# Testing
+# ------------------------------------------------------------------------------
+mock
+pytest  # https://github.com/pytest-dev/pytest
+pytest-sugar  # https://github.com/Frozenball/pytest-sugar
+pytest-mock
+black  # https://github.com/ambv/black
+pre-commit  # https://github.com/pre-commit/pre-commit
+pytest-cov
+httpretty
+django-silk
+# rich
+# Code quality
+# ------------------------------------------------------------------------------
+flake8 # https://github.com/PyCQA/flake8
+coverage  # https://github.com/nedbat/coveragepy
+mypy  # https://github.com/python/mypy
+radon
+pylint
+django-stubs
+djangorestframework-stubs
+
+# Django
+# ------------------------------------------------------------------------------
+factory-boy  # https://github.com/FactoryBoy/factory_boy
+django-debug-toolbar  # https://github.com/jazzband/django-debug-toolbar
+-e git+https://github.com/schinckel/django_coverage_plugin.git#egg=django-coverage-plugin
+#-e git+https://github.com/mkurnikov/djangorestframework-stubs.git#egg=djangorestframework-stubs
+#-e git+https://github.com/mkurnikov/django-stubs.git#egg=django-stubs
+pytest-django  # https://github.com/pytest-dev/pytest-django
+
+django-anymail[mailgun]  # https://github.com/anymail/django-anymail

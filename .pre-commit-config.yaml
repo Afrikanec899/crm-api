@@ -1,0 +1,7 @@
+- repo: local
+  hooks:
+  - id: run_tests
+    name: run_tests
+    entry: ./run_local_tests_docker.sh
+    pass_filenames: false
+    language: system

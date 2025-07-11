@@ -1,0 +1,4 @@
+❗Domains <b>DOWN!</b>{% for domain in domains|slice:":10" %}
+{{ domain.name }} (campaigns count: {{ domain.campaigns.activeCount }}){% endfor %}
+...
+Total down domains: {{ domains|length }}

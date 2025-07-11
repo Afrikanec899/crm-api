@@ -1,0 +1,61 @@
+# CORE apps
+# ------------------------------------------------------------------------------
+argon2-cffi  # https://github.com/hynek/argon2_cffi
+python-dateutil  # https://github.com/dateutil/dateutil/
+Pillow # https://github.com/python-pillow/Pillow
+pytz
+redis
+hiredis
+python-slugify
+sentry-sdk
+raven
+pytelegrambotapi
+beautifulsoup4
+drf-yasg>=1.17.0
+diff-match-patch
+-e git+https://github.com/mobolic/facebook-sdk.git#egg=facebook_sdk
+-e git+https://github.com/alternativshik/facebook-python-business-sdk.git#egg=facebook_business
+# facebook_business
+# Channels
+channels<3
+daphne<3
+channels_redis
+# -e git+https://github.com/avikam/flower#egg=flower
+faker
+flower
+haproxy-stats
+MechanicalSoup
+short_url
+gevent
+unidecode
+tldextract
+markdown-customblocks
+sorl-thumbnail
+pytesseract
+architect
+
+# Django
+# ------------------------------------------------------------------------------
+Django
+django-redis
+django-environ  # https://github.com/joke2k/django-environ
+django-credit-cards
+django-imagekit
+django-filter
+django-cors-headers
+djangorestframework
+drf-flex-fields
+# django-celery-beat
+-e git+https://github.com/celery/django-celery-beat.git#egg=django-celery-beat
+# celery
+django_redis
+django-fsm
+django-model-utils
+django-json-widget==1.0.1
+django-fsm-admin
+django-grappelli
+django-rest-knox
+django-cryptography
+-e git+https://github.com/django-wiki/django-wiki.git#egg=wiki
+django-mptt
+django-sekizai

@@ -1,0 +1,530 @@
+version: '3.6'
+
+services:
+  django:
+    image: "registry.gitlab.com/a-p-digital/crm-api/django:${CI_COMMIT_SHA}"
+    depends_on:
+      - postgres
+      - redis
+#      - rabbitmq
+    volumes:
+      - /home/crm/crm-api/static:/app/static
+      - /home/crm/crm-api/media:/app/media
+    environment:
+      - SERVICE_PORTS=5000
+    env_file:
+      - .envs/.production/.redis
+      - .envs/.production/.django
+      - .envs/.production/.pgbouncer
+#      - .envs/.production/.rabbitmq
+    command: /start
+    deploy:
+      replicas: 8
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+        window: 120s
+    networks:
+      - net
+
+  redis:
+    image: redis:latest
+    volumes:
+      - /home/crm/crm-api/dbs/redis:/data/
+#      - /home/crm/crm-api/dbs/redis/redis.conf:/etc/redis/redis.conf
+    networks:
+      - net
+    env_file:
+      - .envs/.production/.redis
+    deploy:
+      placement:
+        constraints: [node.role == manager]
+
+  postgres:
+    image: "registry.gitlab.com/a-p-digital/crm-api/postgres-12.2.crm:latest"
+    volumes:
+      - /home/crm/crm-api/dbs/postgres12:/var/lib/postgresql/data/
+    env_file:
+      - .envs/.production/.postgres
+    networks:
+      - net
+    deploy:
+      placement:
+        constraints: [node.role == manager]
+
+  pgbouncer:
+    image: brainsam/pgbouncer:latest
+    env_file:
+      - .envs/.production/.pgbouncer
+    networks:
+      - net
+    deploy:
+      placement:
+        constraints: [node.role == manager]
+
+  proxy:
+    image: dockercloud/haproxy
+    depends_on:
+      - django
+    environment:
+      - BALANCE=leastconn
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "49001:80"
+    networks:
+      - net
+    deploy:
+      placement:
+        constraints: [node.role == manager]
+#
+#  rabbitmq:
+#    image: rabbitmq:3.8.11-management
+#    networks:
+#      - net
+#    ports:
+#      - "15672:15672"
+#    hostname: "crm.rabbit"
+#    env_file:
+#      - .envs/.production/.rabbitmq
+#    volumes:
+#      - /home/crm/crm-api/dbs/rabbit:/var/lib/rabbitmq/mnesia
+#    deploy:
+#      placement:
+#        constraints: [node.role == manager]
+
+  mla:
+    image: "registry.gitlab.com/a-p-digital/crm-api/mla:5-holy"
+    networks:
+      - net
+    volumes:
+      - /home/crm/crm-api/mla:/mla
+      - /home/crm/.multiloginapp.com:/root/.multiloginapp.com
+    deploy:
+      placement:
+        constraints: [node.role == manager]
+
+  websockets:
+    image: "registry.gitlab.com/a-p-digital/crm-api/django:${CI_COMMIT_SHA}"
+    ports:
+      - "9999:9999"
+    command: /start-websockets
+    env_file:
+      - .envs/.production/.pgbouncer
+      - .envs/.production/.django
+      - .envs/.production/.redis
+#      - .envs/.production/.rabbitmq
+    networks:
+      - net
+    deploy:
+      replicas: 4
+      update_config:
+        parallelism: 2
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+        window: 120s
+
+  celerybeat:
+    image: "registry.gitlab.com/a-p-digital/crm-api/django:${CI_COMMIT_SHA}"
+    ports: []
+    command: /start-celerybeat
+    volumes:
+      - /home/crm/crm-api/static:/app/static
+      - /home/crm/crm-api/media:/app/media
+    env_file:
+      - .envs/.production/.pgbouncer
+      - .envs/.production/.django
+      - .envs/.production/.redis
+#      - .envs/.production/.rabbitmq
+    networks:
+      - net
+    deploy:
+      placement:
+        constraints: [node.role == manager]
+
+  celeryworker-default:
+    image: "registry.gitlab.com/a-p-digital/crm-api/django:${CI_COMMIT_SHA}"
+    ports: []
+    command: /start-default.sh
+    volumes:
+      - /home/crm/crm-api/static:/app/static
+      - /home/crm/crm-api/media:/app/media
+    env_file:
+      - .envs/.production/.pgbouncer
+      - .envs/.production/.django
+      - .envs/.production/.redis
+#      - .envs/.production/.rabbitmq
+    networks:
+      - net
+    deploy:
+      replicas: 4
+      update_config:
+        parallelism: 2
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+        window: 120s
+
+  celeryworker-notifications:
+    image: "registry.gitlab.com/a-p-digital/crm-api/django:${CI_COMMIT_SHA}"
+    ports: []
+    command: /start-notifications.sh
+    volumes:
+      - /home/crm/crm-api/static:/app/static
+      - /home/crm/crm-api/media:/app/media
+    env_file:
+      - .envs/.production/.pgbouncer
+      - .envs/.production/.django
+      - .envs/.production/.redis
+#      - .envs/.production/.rabbitmq
+    networks:
+      - net
+    deploy:
+      replicas: 8
+      update_config:
+        parallelism: 2
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+        window: 120s
+
+  celeryworker-tg-notifications:
+    image: "registry.gitlab.com/a-p-digital/crm-api/django:${CI_COMMIT_SHA}"
+    ports: []
+    command: /start-tg-notifications.sh
+    volumes:
+      - /home/crm/crm-api/static:/app/static
+      - /home/crm/crm-api/media:/app/media
+    env_file:
+      - .envs/.production/.pgbouncer
+      - .envs/.production/.django
+      - .envs/.production/.redis
+#      - .envs/.production/.rabbitmq
+    networks:
+      - net
+    deploy:
+      replicas: 8
+      update_config:
+        parallelism: 2
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+        window: 120s
+
+  celeryworker-automation:
+    image: "registry.gitlab.com/a-p-digital/crm-api/django:${CI_COMMIT_SHA}"
+    ports: []
+    command: /start-automation.sh
+    volumes:
+      - /home/crm/crm-api/static:/app/static
+      - /home/crm/crm-api/media:/app/media
+    env_file:
+      - .envs/.production/.pgbouncer
+      - .envs/.production/.django
+      - .envs/.production/.redis
+#      - .envs/.production/.rabbitmq
+    networks:
+      - net
+    deploy:
+      replicas: 4
+      update_config:
+        parallelism: 2
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+        window: 120s
+
+  celeryworker-tracker:
+    image: "registry.gitlab.com/a-p-digital/crm-api/django:${CI_COMMIT_SHA}"
+    ports: [ ]
+    command: /start-tracker.sh
+    volumes:
+      - /home/crm/crm-api/static:/app/static
+      - /home/crm/crm-api/media:/app/media
+    env_file:
+      - .envs/.production/.pgbouncer
+      - .envs/.production/.django
+      - .envs/.production/.redis
+#      - .envs/.production/.rabbitmq
+    networks:
+      - net
+    deploy:
+      replicas: 4
+      update_config:
+        parallelism: 2
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+        window: 120s
+
+  celeryworker-shortify:
+    image: "registry.gitlab.com/a-p-digital/crm-api/django:${CI_COMMIT_SHA}"
+    ports: [ ]
+    command: /start-shortify.sh
+    volumes:
+      - /home/crm/crm-api/static:/app/static
+      - /home/crm/crm-api/media:/app/media
+    env_file:
+      - .envs/.production/.pgbouncer
+      - .envs/.production/.django
+      - .envs/.production/.redis
+#      - .envs/.production/.rabbitmq
+    networks:
+      - net
+    deploy:
+      replicas: 4
+      update_config:
+        parallelism: 2
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+        window: 120s
+
+  celeryworker-facebook:
+    image: "registry.gitlab.com/a-p-digital/crm-api/django:${CI_COMMIT_SHA}"
+    ports: []
+    command: /start-facebook.sh
+    volumes:
+      - /home/crm/crm-api/static:/app/static
+      - /home/crm/crm-api/media:/app/media
+    env_file:
+      - .envs/.production/.pgbouncer
+      - .envs/.production/.django
+      - .envs/.production/.redis
+#      - .envs/.production/.rabbitmq
+    networks:
+      - net
+    deploy:
+      replicas: 4
+      update_config:
+        parallelism: 2
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+        window: 120s
+
+  celeryworker-facebook-businesses:
+    image: "registry.gitlab.com/a-p-digital/crm-api/django:${CI_COMMIT_SHA}"
+    ports: []
+    command: /start-facebook-businesses.sh
+    volumes:
+      - /home/crm/crm-api/static:/app/static
+      - /home/crm/crm-api/media:/app/media
+    env_file:
+      - .envs/.production/.pgbouncer
+      - .envs/.production/.django
+      - .envs/.production/.redis
+#      - .envs/.production/.rabbitmq
+    networks:
+      - net
+    deploy:
+      replicas: 4
+      update_config:
+        parallelism: 2
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+        window: 120s
+
+  celeryworker-facebook-stats:
+    image: "registry.gitlab.com/a-p-digital/crm-api/django:${CI_COMMIT_SHA}"
+    ports: []
+    command: /start-facebook-stats.sh
+    volumes:
+      - /home/crm/crm-api/static:/app/static
+      - /home/crm/crm-api/media:/app/media
+    env_file:
+      - .envs/.production/.pgbouncer
+      - .envs/.production/.django
+      - .envs/.production/.redis
+#      - .envs/.production/.rabbitmq
+    networks:
+      - net
+    deploy:
+      replicas: 4
+      update_config:
+        parallelism: 2
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+        window: 120s
+
+  celeryworker-facebook-bills:
+    image: "registry.gitlab.com/a-p-digital/crm-api/django:${CI_COMMIT_SHA}"
+    ports: []
+    command: /start-facebook-bills.sh
+    volumes:
+      - /home/crm/crm-api/static:/app/static
+      - /home/crm/crm-api/media:/app/media
+    env_file:
+      - .envs/.production/.pgbouncer
+      - .envs/.production/.django
+      - .envs/.production/.redis
+#      - .envs/.production/.rabbitmq
+    networks:
+      - net
+    deploy:
+      replicas: 4
+      update_config:
+        parallelism: 2
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+        window: 120s
+
+  celeryworker-facebook-comments:
+    image: "registry.gitlab.com/a-p-digital/crm-api/django:${CI_COMMIT_SHA}"
+    ports: []
+    command: /start-facebook-comments.sh
+    volumes:
+      - /home/crm/crm-api/static:/app/static
+      - /home/crm/crm-api/media:/app/media
+    env_file:
+      - .envs/.production/.pgbouncer
+      - .envs/.production/.django
+      - .envs/.production/.redis
+#      - .envs/.production/.rabbitmq
+    networks:
+      - net
+    deploy:
+      replicas: 4
+      update_config:
+        parallelism: 2
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+        window: 120s
+
+  celeryworker-contacts:
+    image: "registry.gitlab.com/a-p-digital/crm-api/django:${CI_COMMIT_SHA}"
+    ports: []
+    command: /start-contacts.sh
+    volumes:
+      - /home/crm/crm-api/static:/app/static
+      - /home/crm/crm-api/media:/app/media
+    env_file:
+      - .envs/.production/.pgbouncer
+      - .envs/.production/.django
+      - .envs/.production/.redis
+#      - .envs/.production/.rabbitmq
+    networks:
+      - net
+    deploy:
+      replicas: 4
+      update_config:
+        parallelism: 2
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+        window: 120s
+
+  celeryworker-facebook-adaccounts:
+    image: "registry.gitlab.com/a-p-digital/crm-api/django:${CI_COMMIT_SHA}"
+    ports: []
+    command: /start-facebook-adaccounts.sh
+    volumes:
+      - /home/crm/crm-api/static:/app/static
+      - /home/crm/crm-api/media:/app/media
+    env_file:
+      - .envs/.production/.pgbouncer
+      - .envs/.production/.django
+      - .envs/.production/.redis
+#      - .envs/.production/.rabbitmq
+    networks:
+      - net
+    deploy:
+      replicas: 4
+      update_config:
+        parallelism: 2
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+        window: 120s
+
+  celeryworker-facebook-ads:
+    image: "registry.gitlab.com/a-p-digital/crm-api/django:${CI_COMMIT_SHA}"
+    ports: []
+    command: /start-facebook-ads.sh
+    volumes:
+      - /home/crm/crm-api/static:/app/static
+      - /home/crm/crm-api/media:/app/media
+    env_file:
+      - .envs/.production/.pgbouncer
+      - .envs/.production/.django
+      - .envs/.production/.redis
+#      - .envs/.production/.rabbitmq
+    networks:
+      - net
+    deploy:
+      replicas: 4
+      update_config:
+        parallelism: 2
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+        window: 120s
+
+  celeryworker-mla:
+    image: "registry.gitlab.com/a-p-digital/crm-api/django:${CI_COMMIT_SHA}"
+    ports: []
+    command: /start-mla.sh
+    volumes:
+      - /home/crm/crm-api/static:/app/static
+      - /home/crm/crm-api/media:/app/media
+    env_file:
+      - .envs/.production/.pgbouncer
+      - .envs/.production/.django
+      - .envs/.production/.redis
+#      - .envs/.production/.rabbitmq
+    networks:
+      - net
+    deploy:
+      replicas: 1
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+        window: 120s
+
+  flower:
+    image: "registry.gitlab.com/a-p-digital/crm-api/django:${CI_COMMIT_SHA}"
+    ports:
+      - "5555:5555"
+    command: /start-flower
+    volumes:
+      - /home/crm/crm-api/dbs/flower:/app/flower/
+    networks:
+      - net
+    env_file:
+      - .envs/.production/.pgbouncer
+      - .envs/.production/.django
+      - .envs/.production/.redis
+#      - .envs/.production/.rabbitmq
+    deploy:
+      placement:
+        constraints: [node.role == manager]
+
+networks:
+  net:
+    driver: overlay
